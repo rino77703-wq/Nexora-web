@@ -14,6 +14,7 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+const db = firebase.firestore();
 
 // -------------------
 // 2️⃣ تسجيل مستخدم جديد (Sign Up)
@@ -27,7 +28,7 @@ if(registerForm){
         auth.createUserWithEmailAndPassword(email, password)
             .then(userCredential => {
                 alert("Sign Up successful!");
-                registerForm.reset(); // تفريغ الحقول بعد التسجيل
+                registerForm.reset();
             })
             .catch(error => {
                 alert("Error: " + error.message);
@@ -47,10 +48,43 @@ if(loginForm){
         auth.signInWithEmailAndPassword(email, password)
             .then(userCredential=>{
                 alert("Login successful!");
-                loginForm.reset(); // تفريغ الحقول بعد الدخول
+                loginForm.reset();
             })
             .catch(error=>{
                 alert("Error: " + error.message);
             });
+    });
+}
+
+// -------------------
+// 4️⃣ دردشة Firestore
+// -------------------
+const sendBtn = document.getElementById("sendBtn");
+if(sendBtn){
+    sendBtn.addEventListener("click", ()=>{
+        const messageInput = document.getElementById("messageInput");
+        const message = messageInput.value.trim();
+        if(message !== ""){
+            db.collection("messages").add({
+                text: message,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            messageInput.value = "";
+        }
+    });
+}
+
+const messagesDiv = document.getElementById("messages");
+if(messagesDiv){
+    db.collection("messages").orderBy("timestamp")
+      .onSnapshot(snapshot => {
+        messagesDiv.innerHTML = "";
+        snapshot.forEach(doc => {
+            const msg = doc.data();
+            const div = document.createElement("div");
+            div.textContent = msg.text;
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
     });
 }
